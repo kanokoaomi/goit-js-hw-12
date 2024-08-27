@@ -6,7 +6,7 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 import { fetchReturn, listOfImg, form } from './js/pixabay-api';
 import { createGallery, lightbox } from './js/render-functions';
 
-const onFormElement = pictureInfo => {
+const onFormElement = event => {
   event.preventDefault();
   const inputResult = form.elements.user_search.value.trim();
 
