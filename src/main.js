@@ -10,6 +10,13 @@ const onFormElement = event => {
   event.preventDefault();
   const inputResult = form.elements.user_search.value.trim();
 
+  if (inputResult === '') {
+    iziToast.show({
+      message: 'Please enter a search query!',
+    });
+    return;
+  }
+
   listOfImg.innerHTML = '';
 
   showLoader();
@@ -29,14 +36,17 @@ const onFormElement = event => {
         lightbox.refresh();
       }
     })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      hideLoader();
-    });
+    .catch(() => {
+      iziToast
+        .show({
+          message: 'Sorry, there is an issue. Please try again!',
+        })
+        .finally(() => {
+          hideLoader();
+        });
 
-  form.reset();
+      form.reset();
+    });
 };
 
 const loader = document.querySelector('.loader');
@@ -49,9 +59,8 @@ const hideLoader = () => {
 
 form.addEventListener('submit', onFormElement);
 
-listOfImg.addEventListener('click', event => {
-  if (event.target.classList.contains('gallery-image')) {
-    event.preventDefault();
-    lightbox.open();
-  }
+const lightboxOpen = new SimpleLightbox('.gallery a', {
+  captions: true,
+  captionsData: 'alt',
+  captionDelay: 250,
 });
