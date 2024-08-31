@@ -22,10 +22,4 @@ export function createGallery(pictureInfo) {
     `;
 }
 
-export const lightbox = new simpleLightbox('.gallery-item a', {
-  captions: true,
-  captionsData: 'alt',
-  captionDelay: 250,
-});
-
 export const listOfImg = document.querySelector('.gallery');

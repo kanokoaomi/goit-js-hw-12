@@ -4,11 +4,23 @@ import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
 import { fetchReturn, listOfImg, form } from './js/pixabay-api';
-import { createGallery, lightbox } from './js/render-functions';
+import { createGallery } from './js/render-functions';
 
-const onFormElement = event => {
+const loadMoreBtn = document.querySelector('.load-more-btn');
+let currentPage = 1;
+const postPerPage = 15;
+let postsNumberQuantity = 0;
+
+const lightbox = new SimpleLightbox('.gallery a', {
+  captions: true,
+  captionsData: 'alt',
+  captionDelay: 250,
+});
+
+const renderImages = async event => {
   event.preventDefault();
   const inputResult = form.elements.user_search.value.trim();
+  currentPage = 1;
 
   if (inputResult === '') {
     iziToast.show({
@@ -20,33 +32,31 @@ const onFormElement = event => {
   listOfImg.innerHTML = '';
 
   showLoader();
-
-  fetchReturn(inputResult)
-    .then(data => {
-      if (data.hits.length === 0) {
-        iziToast.show({
-          message:
-            'Sorry, there are no images matching your search query. Please try again!',
-        });
-      } else {
-        const galleryCreating = data.hits
-          .map(imgInfo => createGallery(imgInfo))
-          .join('');
-        listOfImg.innerHTML = galleryCreating;
-        lightbox.refresh();
-      }
-    })
-    .catch(() => {
-      iziToast
-        .show({
-          message: 'Sorry, there is an issue. Please try again!',
-        })
-        .finally(() => {
-          hideLoader();
-        });
-
-      form.reset();
+  try {
+    const response = await fetchReturn(inputResult, currentPage);
+    if (response.data.hits.length === 0) {
+      iziToast.show({
+        message:
+          'Sorry, there are no images matching your search query. Please try again!',
+      });
+    } else {
+      const galleryCreating = response.data.hits
+        .map(imgInfo => createGallery(imgInfo))
+        .join('');
+      listOfImg.innerHTML = galleryCreating;
+      lightbox.refresh();
+      hideLoader();
+      loadMoreBtn.classList.remove('is-hidden');
+      console.log(response);
+    }
+  } catch (err) {
+    hideLoader();
+    iziToast.show({
+      message: 'Sorry, there is an issue. Please try again!',
     });
+    form.reset();
+    console.log(err);
+  }
 };
 
 const loader = document.querySelector('.loader');
@@ -57,10 +67,41 @@ const hideLoader = () => {
   loader.style.display = 'none';
 };
 
-form.addEventListener('submit', onFormElement);
+form.addEventListener('submit', renderImages);
 
-const lightboxOpen = new SimpleLightbox('.gallery a', {
-  captions: true,
-  captionsData: 'alt',
-  captionDelay: 250,
-});
+const loadMoreListener = async event => {
+  try {
+    currentPage++;
+    const inputResult = form.elements.user_search.value.trim();
+    const response = await fetchReturn(inputResult, currentPage);
+
+    const galleryCreating = response.data.hits
+      .map(imgInfo => createGallery(imgInfo))
+      .join('');
+    listOfImg.insertAdjacentHTML('beforeend', galleryCreating);
+    lightbox.refresh();
+
+    const galleryItemEl = document.querySelector('.gallery-item');
+    const rect = galleryItemEl.getBoundingClientRect();
+    const width = rect.width * 2;
+
+    window.scrollBy({
+      top: width,
+      left: 100,
+      behavior: 'smooth',
+    });
+
+    postsNumberQuantity += postPerPage;
+
+    if (postsNumberQuantity >= response.data.totalHits) {
+      iziToast.show({
+        message: "We're sorry, but you've reached the end of search results.",
+      });
+      loadMoreBtn.classList.add('is-hidden');
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+loadMoreBtn.addEventListener('click', loadMoreListener);
