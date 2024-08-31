@@ -17,6 +17,16 @@ const lightbox = new SimpleLightbox('.gallery a', {
   captionDelay: 250,
 });
 
+function smoothScroll() {
+  const { height: cardHeight } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+}
+
 const renderImages = async event => {
   event.preventDefault();
   const inputResult = form.elements.user_search.value.trim();
@@ -47,7 +57,6 @@ const renderImages = async event => {
       lightbox.refresh();
       hideLoader();
       loadMoreBtn.classList.remove('is-hidden');
-      console.log(response);
     }
   } catch (err) {
     hideLoader();
@@ -80,16 +89,7 @@ const loadMoreListener = async event => {
       .join('');
     listOfImg.insertAdjacentHTML('beforeend', galleryCreating);
     lightbox.refresh();
-
-    const galleryItemEl = document.querySelector('.gallery-item');
-    const rect = galleryItemEl.getBoundingClientRect();
-    const width = rect.width * 2;
-
-    window.scrollBy({
-      top: width,
-      left: 100,
-      behavior: 'smooth',
-    });
+    smoothScroll();
 
     postsNumberQuantity += postPerPage;
 
